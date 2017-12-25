@@ -1,0 +1,8 @@
+﻿  scanning-and-process-sample.cpp
+  ScenePresenter.cpp
+  正在生成代码...
+glfw3.lib(init.c.obj) : error LNK2019: 无法解析的外部符号 __imp_vsnprintf，该符号在函数 _glfwInputError 中被引用
+MSVCRT.lib(vsnprintf.obj) : error LNK2001: 无法解析的外部符号 __imp_vsnprintf
+glfw3.lib(context.c.obj) : error LNK2019: 无法解析的外部符号 __imp_sscanf，该符号在函数 parseVersionString 中被引用
+MSVCRT.lib(vsnprintf.obj) : error LNK2001: 无法解析的外部符号 __imp__vsnprintf
+bin-vc14-x64\scanning-and-process-sample.exe : fatal error LNK1120: 3 个无法解析的外部命令

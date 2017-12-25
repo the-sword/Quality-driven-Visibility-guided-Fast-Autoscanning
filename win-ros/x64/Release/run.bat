@@ -1,0 +1,1 @@
+win-ros.exe pose.txt ..\..\..\artec-sdk-samples-v2.0-20171207\simple-capture\bin-vc14-x64\simple-capture-sample.exe

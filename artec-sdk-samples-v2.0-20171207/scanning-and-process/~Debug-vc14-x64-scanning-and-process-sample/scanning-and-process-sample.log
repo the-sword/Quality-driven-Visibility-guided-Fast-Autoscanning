@@ -1,0 +1,4 @@
+﻿C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppBuild.targets(392,5): warning MSB8028: The intermediate directory (~Debug-vc14-x64-scanning-and-process-sample/) contains files shared from another project (scanning-and-process-sample.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  scanning-and-process-sample.vcxproj -> C:\Users\mlang\Desktop\autoscanner\artec-sdk-samples-v2.0-20171207\samples\scanning-and-process\bin-vc14-x64\scanning-and-process-sampled.exe
+  scanning-and-process-sample.vcxproj -> bin-vc14-x64\scanning-and-process-sampled.pdb (Full PDB)
+  0 File(s) copied
