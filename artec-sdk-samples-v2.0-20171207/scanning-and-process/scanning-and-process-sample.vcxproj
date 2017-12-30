@@ -50,6 +50,7 @@
   <ItemGroup>
     <ClCompile Include="source\scanning-and-process-sample.cpp" />
     <ClCompile Include="source\ScenePresenter.cpp" />
+    <ClInclude Include="source\Directory.h" />
     <ClInclude Include="source\ScenePresenter.h" />
     <None Include="ReadMe.txt" />
   </ItemGroup>

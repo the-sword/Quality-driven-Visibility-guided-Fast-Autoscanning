@@ -9,6 +9,9 @@
 ********************************************************************/
 #include <iomanip>
 #include <iostream>
+
+#include <string>
+#include <vector>
 #include <artec/sdk/base/Log.h>
 #include <artec/sdk/base/Errors.h>
 
@@ -31,6 +34,7 @@
 #include <artec/sdk/algorithms/IAlgorithm.h>
 #include <artec/sdk/algorithms/Algorithms.h>
 #include "ScenePresenter.h"
+#include "Directory.h"
 
 namespace asdk {
     using namespace artec::sdk::base;
@@ -39,7 +43,7 @@ namespace asdk {
     using namespace artec::sdk::algorithms;
 };
 using asdk::TRef;
-
+using namespace std;
 // this constant determines the number of frames to collect.
 const int NumberOfFramesToCapture = 10;
 
@@ -252,9 +256,9 @@ asdk::ErrorCode ScanningProcedureSample( asdk::AlgorithmWorkset& workset  )
     desc.captureTextureFrequency = 10;
     desc.ignoreRegistrationErrors = false;
 
+	//return scanning
     SAFE_SDK_CALL( asdk::createScanningProcedure( &scanning, scanner, &desc ) );
     std::wcout << L"OK" << std::endl;
-
 
     std::wcout << L"Launching scanning procedure in a fully automatic mode..." << std::endl;
     SAFE_SDK_CALL( executeJob( scanning, &workset ) );
@@ -410,13 +414,14 @@ asdk::ErrorCode TextureProcessingSample( asdk::AlgorithmWorkset& workset  )
 
 int main( int argc, char **argv )
 {
+	string path = "D:/Zhouxh-project/source code/artec/artec-sdk-samples-v2.0/samples/scanning-and-process/scans";
     // The log verbosity level is set here. It is set to the most
     // verbose value - Trace. If you have any problems working with 
     // our examples, please do not hesitate to send us this extensive 
     // information along with your questions. However, if you feel 
     // comfortable with these Artec Scanning SDK code examples,
     // we suggest you to set this level to asdk::VerboseLevel_Info.
-    asdk::setOutputLevel( asdk::VerboseLevel_Trace );
+    asdk::setOutputLevel( asdk::VerboseLevel_Info);
 
     // create workset for scanned data
     TRef<asdk::IModel> inputContainer;
@@ -437,14 +442,73 @@ int main( int argc, char **argv )
         return (int)errorCode;
     }
 
+	//saving  frame meshes to OBJ format
+	{
+		std::wcout << L"Saving frame to OBJ file..." << std::endl;
 
-    errorCode = AlgorithmProcessingSample( workset );
-    if( errorCode != asdk::ErrorCode_OK )
-    {
-        std::wcout << L"Finishing work on errors when processing..." << std::endl;
-        return (int)errorCode;
-    }
+		errorCode = asdk::ErrorCode_OK;
 
+		for (int ix = 0; ix < workset.in->getSize(); ix++)
+		{
+			TRef<asdk::IScan> scan(workset.in->getElement(ix));
+
+			for (int jx = 0; jx < scan->getSize(); jx++)
+			{
+				TRef<asdk::IFrameMesh> frameMesh(scan->getElement(jx));
+
+				std::wstring pathFormat(OUTPUT_DIR L"\\frame-S%02dF%02d.obj");
+				std::vector<wchar_t> pathBuffer(pathFormat.size() + 1);
+				std::swprintf(pathBuffer.data(), pathBuffer.size(), pathFormat.c_str(), ix, jx);
+
+				errorCode = asdk::io::saveObjFrameToFile(pathBuffer.data(), frameMesh);
+				if (errorCode != asdk::ErrorCode_OK)
+				{
+					std::wcout << L"Cannot open file '" << pathBuffer.data() << "'" << std::endl;
+					std::wcout << L"skipped" << std::endl;
+					break;
+				}
+			}
+		}
+		if (errorCode == asdk::ErrorCode_OK)
+		{
+			std::wcout << L"OK" << std::endl;
+		}
+	}
+
+	vector< TRef<asdk::IFrameMesh> > frameMesh;
+	std::vector<std::string> filenames = Directory::GetListFiles(path, "*.obj");
+	TRef<artec::sdk::base::IScan> scan;
+	SAFE_SDK_CALL(createScan(&scan));
+
+	if (filenames.size() == 1)
+	{
+		cout << "当前只扫描了一次，无法进行后处理，请获取更多数据" << endl;
+	}
+	else
+	{
+		for (int i = 0; i < filenames.size(); i++)
+		{
+			artec::sdk::base::Matrix3x4D matrixCalibration;
+			TRef<asdk::IFrameMesh> frame;
+			//TRef<asdk::IFrameMesh> inputMesh;
+			string filePath = filenames[i];
+			std::wstring widestr = std::wstring(filePath.begin(), filePath.end());
+			const  wchar_t* widecstr = widestr.c_str();
+
+			SAFE_SDK_CALL(artec::sdk::base::io::Obj::load(&frame, widecstr));
+			SAFE_SDK_CALL(scan->add(frame));
+			//artec::sdk::base::io::loadObjFrameFromFile(&inputMesh, widecstr);
+			//frameMesh.push_back(inputMesh);
+			//scan->add(inputMesh);
+		}
+
+		errorCode = AlgorithmProcessingSample(workset);
+		if (errorCode != asdk::ErrorCode_OK)
+		{
+			std::wcout << L"Finishing work on errors when processing..." << std::endl;
+			return (int)errorCode;
+		}
+	}
 
     #ifdef SAVE_FUSION_MESH_ON
     // saving the resulting mesh to OBJ format
@@ -473,93 +537,93 @@ int main( int argc, char **argv )
         }
     }
 	// 或许可以不要这段代码
-    // saving all frame meshes to OBJ format
-    //{
-    //    std::wcout << L"Saving all the reconstructed frames to separate OBJ files..." << std::endl;
+    // //saving all frame meshes to OBJ format
+    {
+        std::wcout << L"Saving all the reconstructed frames to separate OBJ files..." << std::endl;
 
-    //    errorCode = asdk::ErrorCode_OK;
+        errorCode = asdk::ErrorCode_OK;
 
-    //    for( int ix = 0;  ix < workset.in->getSize(); ix++ )
-    //    {
-    //        TRef<asdk::IScan> scan( workset.in->getElement( ix ) );
-
-    //        for( int jx = 0; jx < scan->getSize(); jx++ )
-    //        {
-    //            TRef<asdk::IFrameMesh> frameMesh( scan->getElement( jx ) );
-
-    //            std::wstring pathFormat( OUTPUT_DIR L"\\frame-S%02dF%02d.obj" );
-    //            std::vector<wchar_t> pathBuffer( pathFormat.size() +1 );
-    //            std::swprintf( pathBuffer.data(), pathBuffer.size(), pathFormat.c_str(), ix, jx );
-
-    //            errorCode = asdk::io::saveObjFrameToFile( pathBuffer.data(), frameMesh );
-    //            if( errorCode != asdk::ErrorCode_OK )
-    //            {
-    //                std::wcout << L"Cannot open file '" << pathBuffer.data() << "'" << std::endl;
-    //                std::wcout << L"skipped" << std::endl;
-    //                break;
-    //            }
-    //        }
-    //    }
-    //    if( errorCode == asdk::ErrorCode_OK )
-    //    {
-    //        std::wcout << L"OK" << std::endl;
-    //    }
-    //}
-    #endif
-
-
-    //#ifdef ENABLE_TEXTURE_MAPPING
-
-    //errorCode = TextureProcessingSample( workset );
-    //if( errorCode != asdk::ErrorCode_OK )
-    //{
-    //    std::wcout << L"failed" << std::endl;
-    //    std::wcout << L"Continue to work withstanding errors when texturing..." << std::endl;
-    //}
-    //else
-    //{
-    //    #ifdef SAVE_TEXTURED_MESH_ON
-
-    //    // saving the resulting texture to OBJ format
-    //    {
-    //        asdk::ICompositeContainer* meshContainer = workset.in->getCompositeContainer();
-    //        if( meshContainer && meshContainer->getSize() > 0 )
-    //        {
-    //            asdk::ICompositeMesh* resultMesh = meshContainer->getElement( 0 );
-
-    //            std::wcout << L"Saving the resulting textured mesh to an OBJ file..." << std::endl;
-    //            const wchar_t* filename = OUTPUT_DIR L"\\textured-mesh.obj";
-    //            errorCode = asdk::io::saveObjCompositeToFile( filename, resultMesh );
-    //            if( errorCode != asdk::ErrorCode_OK )
-    //            {
-    //                std::wcout << L"Cannot open file '" << filename << "'" << std::endl;
-    //                std::wcout << L"skipped" << std::endl;
-    //            }
-    //            else
-    //            {
-    //                std::wcout << L"OK" << std::endl;
-    //            }
-    //        }
-    //    }
-
-    //    #endif
-    //}
-
-    //#endif
-
-
-    // demonstrating the results via the simple GLFW viewer
-    if(0){
-        asdk::ICompositeContainer* meshContainer = workset.in->getCompositeContainer();
-        if( meshContainer && meshContainer->getSize() > 0 )
+        for( int ix = 0;  ix < workset.in->getSize(); ix++ )
         {
-            asdk::ICompositeMesh* resultMesh = meshContainer->getElement( 0 );
+            TRef<asdk::IScan> scan( workset.in->getElement( ix ) );
 
-            std::wcout << L"Showing the resulting mesh..." << std::endl;
-            SAFE_SDK_CALL( DisplayScene( *resultMesh ) );
+            for( int jx = 0; jx < scan->getSize(); jx++ )
+            {
+                TRef<asdk::IFrameMesh> frameMesh( scan->getElement( jx ) );
+
+                std::wstring pathFormat( OUTPUT_DIR L"\\frame-S%02dF%02d.obj" );
+                std::vector<wchar_t> pathBuffer( pathFormat.size() +1 );
+                std::swprintf( pathBuffer.data(), pathBuffer.size(), pathFormat.c_str(), ix, jx );
+
+                errorCode = asdk::io::saveObjFrameToFile( pathBuffer.data(), frameMesh );
+                if( errorCode != asdk::ErrorCode_OK )
+                {
+                    std::wcout << L"Cannot open file '" << pathBuffer.data() << "'" << std::endl;
+                    std::wcout << L"skipped" << std::endl;
+                    break;
+                }
+            }
+        }
+        if( errorCode == asdk::ErrorCode_OK )
+        {
             std::wcout << L"OK" << std::endl;
         }
     }
+    #endif
+
+
+    #ifdef ENABLE_TEXTURE_MAPPING
+
+    errorCode = TextureProcessingSample( workset );
+    if( errorCode != asdk::ErrorCode_OK )
+    {
+        std::wcout << L"failed" << std::endl;
+        std::wcout << L"Continue to work withstanding errors when texturing..." << std::endl;
+    }
+    else
+    {
+        #ifdef SAVE_TEXTURED_MESH_ON
+
+        // saving the resulting texture to OBJ format
+        {
+            asdk::ICompositeContainer* meshContainer = workset.in->getCompositeContainer();
+            if( meshContainer && meshContainer->getSize() > 0 )
+            {
+                asdk::ICompositeMesh* resultMesh = meshContainer->getElement( 0 );
+
+                std::wcout << L"Saving the resulting textured mesh to an OBJ file..." << std::endl;
+                const wchar_t* filename = OUTPUT_DIR L"\\textured-mesh.obj";
+                errorCode = asdk::io::saveObjCompositeToFile( filename, resultMesh );
+                if( errorCode != asdk::ErrorCode_OK )
+                {
+                    std::wcout << L"Cannot open file '" << filename << "'" << std::endl;
+                    std::wcout << L"skipped" << std::endl;
+                }
+                else
+                {
+                    std::wcout << L"OK" << std::endl;
+                }
+            }
+        }
+
+        #endif
+    }
+
+    #endif
+
+
+    // demonstrating the results via the simple GLFW viewer
+    //if(0){
+    //    asdk::ICompositeContainer* meshContainer = workset.in->getCompositeContainer();
+    //    if( meshContainer && meshContainer->getSize() > 0 )
+    //    {
+    //        asdk::ICompositeMesh* resultMesh = meshContainer->getElement( 0 );
+
+    //        std::wcout << L"Showing the resulting mesh..." << std::endl;
+    //        SAFE_SDK_CALL( DisplayScene( *resultMesh ) );
+    //        std::wcout << L"OK" << std::endl;
+    //    }
+    //}
 
     std::wcout << L"Finishing work with capturing library..." << std::endl;
 

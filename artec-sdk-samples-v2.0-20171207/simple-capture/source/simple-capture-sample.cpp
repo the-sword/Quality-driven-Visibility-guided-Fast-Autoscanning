@@ -116,8 +116,10 @@ int main( int argc, char **argv )
 		//processor->setROI();
 		float near, far;
 		asdk::RectF rect;
+		//»ñÈ¡É¨ÃèÒÇµÄÉ¨Ãè¾àÀë
 		processor->getScanningRange(&near, &far);
 		processor->setSensitivity(0.9f);
+		//region of interest
 		processor->getROI(&rect);
 
         frame = NULL;

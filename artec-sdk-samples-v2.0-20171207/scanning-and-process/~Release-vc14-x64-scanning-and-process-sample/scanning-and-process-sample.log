@@ -1,8 +1,5 @@
-﻿  scanning-and-process-sample.cpp
+﻿C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppBuild.targets(392,5): warning MSB8028: The intermediate directory (~Release-vc14-x64-scanning-and-process-sample/) contains files shared from another project (scanning-and-process-sample.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  scanning-and-process-sample.cpp
   ScenePresenter.cpp
   正在生成代码...
-glfw3.lib(init.c.obj) : error LNK2019: 无法解析的外部符号 __imp_vsnprintf，该符号在函数 _glfwInputError 中被引用
-MSVCRT.lib(vsnprintf.obj) : error LNK2001: 无法解析的外部符号 __imp_vsnprintf
-glfw3.lib(context.c.obj) : error LNK2019: 无法解析的外部符号 __imp_sscanf，该符号在函数 parseVersionString 中被引用
-MSVCRT.lib(vsnprintf.obj) : error LNK2001: 无法解析的外部符号 __imp__vsnprintf
-bin-vc14-x64\scanning-and-process-sample.exe : fatal error LNK1120: 3 个无法解析的外部命令
+LINK : fatal error LNK1181: 无法打开输入文件“glfw3.lib”
